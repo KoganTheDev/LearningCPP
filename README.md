@@ -5,4 +5,5 @@ This repository contains C++ projects that I am working on to improve my program
 ## Projects
 
 - **Basic Calculator**: A simple calculator that performs addition, subtraction, multiplication, and division.
+- **Guess The Number**: A simple game that allows the user to guess a number between a range the user specifies.
 <!-- insert projects here -->
