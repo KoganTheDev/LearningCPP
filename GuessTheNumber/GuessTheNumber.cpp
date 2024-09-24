@@ -24,6 +24,12 @@ int main() {
 			cout << "Congratsulations, YOU WIN!\n";
 			return 0;
 		}
+		else if (guess < randomNumber) {
+			cout << "Too low.\n";
+		}
+		else if (guess > randomNumber) {
+			cout << "Too high.\n";
+		}
 
 		cout << "Wrong pick, tries left:" << --i << endl;
 	}
