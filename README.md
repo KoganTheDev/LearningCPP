@@ -14,4 +14,4 @@ This repository contains C++ projects that I am working on to improve my program
 - **Basic Calculator**: Managing I/O and functions.
 - **Guess The Number**: Creating random numbers.
 - **ToDo List**: Manipulating I/O and "vector" data structure.
-- **Palindrome Checker**: Recurisive functions, Enums.
+- **Palindrome Checker**: Recurisive functions and Enums.
