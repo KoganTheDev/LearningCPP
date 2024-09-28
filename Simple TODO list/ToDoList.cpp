@@ -186,6 +186,14 @@ void menuManager() {
 		else if (command == 6) {
 			cout << "Insert the index of the task you want to remove.\n";
 			cin >> taskIndex;
+			if (cin.fail())
+			{
+				string line;
+				cin.clear();
+				getline(cin, line);
+				cout << "Invalid index \"" << line << "\"" << endl;
+				continue;
+			}
 			taskIndex -= 1; // Convert to 0-based index.
 		}
 		else if (command == 1 || command == 2) {

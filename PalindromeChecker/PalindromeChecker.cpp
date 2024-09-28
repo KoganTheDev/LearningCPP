@@ -105,6 +105,28 @@ bool isPalindrome(const std::string& str) {
     return isPalindrome(str.substr(1, str.length() - 2)); // returns the str recursively without the first and last characters.
 }
 
+template <class It>
+bool isPalindromeInner(It start, It end)
+{
+    if (start == end || start + 1 == end)
+    {
+        return true;
+    }
+
+    if (*start != *end)
+    {
+        return false;
+    }
+
+    return isPalindromeInner(start + 1, end - 1);
+}
+
+template <class T>
+bool isPalindromeGeneric(const T& generic)
+{
+    return isPalindromeInner(std::begin(generic), std::end(generic) - 1);
+}
+
 bool vectorPalindromeChecker(const std::vector<std::string>& palindromeVector) {
     for (const std::string& str : palindromeVector) {
         if (!isPalindrome(str)) {
@@ -132,7 +154,7 @@ void menuManager() {
         switch (command) {
         case MenuOption::STRING:
             stringToCheck = getUserInput();
-            if (isPalindrome(stringToCheck)) {
+            if (isPalindromeGeneric(stringToCheck)) {
                 std::cout << "The string is a palindrome.\n";
             }
             else {
@@ -141,11 +163,11 @@ void menuManager() {
             break;
         case MenuOption::VECTOR:
             vectorToCheck = getUserVectorInput();
-            if (vectorPalindromeChecker(vectorToCheck)) {
-                std::cout << "The whole vector contains palindromes.\n";
+            if (isPalindromeGeneric(vectorToCheck)) {
+                std::cout << "The vector is a palindrome.\n";
             }
             else {
-                std::cout << "There's an element in the vector which is not a palindrome.\n";
+                std::cout << "The vector is not a palindrome.\n";
             }
             break;
         case MenuOption::EXIT:
@@ -169,15 +191,18 @@ std::string getUserInput() {
 
 std::vector<std::string> getUserVectorInput() {
     int input;
-    VectorCommands command;
+    VectorCommands command = VectorCommands::CONTINUE;
     std::string tempString;
     std::vector<std::string> vector;
 
     do {
-        std::cout << "Insert a string you want to put in the vector: ";
-        std::getline(std::cin, tempString);
-        toLowerCase(tempString);
-        vector.push_back(tempString);
+        if (command == VectorCommands::CONTINUE)
+        {
+            std::cout << "Insert a string you want to put in the vector: ";
+            std::getline(std::cin, tempString);
+            toLowerCase(tempString);
+            vector.push_back(tempString);
+        }
 
         showVector(vector);
 
