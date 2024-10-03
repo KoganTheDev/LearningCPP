@@ -1,226 +1,316 @@
 #include <iostream>
 #include <vector>
 #include <cstdlib>
-#include <ctime> // for initialize seed
+#include <ctime>
 #include <string>
 #include <array>
+#include <limits>
 
-#define MAX_COLUMN 3
-#define MAX_ROW 3
+#define MAX_COLUMN 3  ///< Defines the maximum number of columns in the game grid.
+#define MAX_ROW 3     ///< Defines the maximum number of rows in the game grid.
 
+/**
+ * @brief Represents a player in the game.
+ */
 struct Player {
-	char mark;
-	std::string turn;
+    char mark;          ///< The mark ('O' or 'X') assigned to the player.
+    std::string turn;   ///< The turn order ("First" or "Second") of the player.
 };
 
-using Players = std::array<Player&, 2>;
+// Type aliases for managing players and game grid
+using Players = std::array<Player, 2>;
 using GameGrid = std::vector<std::vector<char>>;
 
+// Function Prototypes
 void play();
-void flipCoin(Players player);
+void flipCoin(Players& players);
 bool isEmpty(const GameGrid& grid, int row, int column);
-void setMark(GameGrid& grid, int row, int column);
-bool isDraw(const GameGrid& grid, int row, int column);
-bool isColAndRowInRange(int maxRow, int maxCol, int row, int column);
-bool doesWin(const GameGrid& grid, int row, int column);
-bool horizontalLineWin(const GameGrid& grid, int col, char playerMark);
-bool verticalLineWin(const GameGrid& grid, int row, char playerMark);
-bool diagonalUpperLeftToLowerRightWin(const GameGrid& grid, int row, int col, char playerMark);
-bool diagonalLowerLeftToUpperRight(const GameGrid& grid, int row, int col, char playerMark);
-
+void setMark(GameGrid& grid, Player& player, int row, int column);
+bool isDraw(const GameGrid& grid);
+bool isRowAndColumnInRange(int maxRow, int maxCol, int row, int column);
+bool doesWin(const GameGrid& grid, int row, int column, char playerMark);
+bool horizontalLineWin(const GameGrid& grid, int row, char playerMark);
+bool verticalLineWin(const GameGrid& grid, int col, char playerMark);
+bool diagonalWin(const GameGrid& grid, char playerMark);
+void showGrid(const GameGrid& grid);
+void clearInput(); 
 
 int main() {
-	play();
-
-	return 0;
+    play();
+    return 0;
 }
 
-void flipCoin(Players players) {
-	int choice;
+/**
+ * @brief Handles the coin flip and player setup before the game starts.
+ *
+ * This function randomly decides which player gets to choose their mark ('O' or 'X')
+ * and whether they want to play first or second.
+ *
+ * @param players Reference to the array of players participating in the game.
+ */
+void flipCoin(Players& players) {
+    int choice;
+    std::srand(static_cast<unsigned int>(std::time(NULL))); // Seed random number generator
+    int randomNumber = std::rand() % 2; // 0 or 1, used to determine which player goes first
 
-	std::srand(static_cast<unsigned int>(std::time(0))); // Seed a random number generator
+    std::cout << "Flipping coin...\n";
+    std::cout << "Player " << randomNumber + 1 << ", you get to choose your mark:\n"
+        << "0. Play as O\n"
+        << "1. Play as X\n";
 
-	int randomNumber = std::rand() % 2; // Creates a random number which is either 0 or 1.
+    // Ensure valid input for player mark choice
+    while (true) {
+        std::cin >> choice;
+        if (std::cin.fail()) {
+            clearInput();
+            std::cout << "Enter a valid option (0 or 1): ";
+            continue;
+        }
+        if (choice == 0 || choice == 1) break;
+    }
 
-	std::cout << "Flipping coin.\n";
-	std::cout << "Player No." << randomNumber + 1 << " You get to choose your mark:\n" <<
-		"Menu:\n" << "0. Play as O.\n" << "1.Play as X.\n";
-	std::cin >> choice;
+    // Assign marks based on player's choice
+    if (choice == 0) {
+        players[randomNumber].mark = 'O';
+        players[!randomNumber].mark = 'X'; // Other player gets X
+    }
+    else {
+        players[randomNumber].mark = 'X';
+        players[!randomNumber].mark = 'O'; // Other player gets O
+    }
 
-	do {
-		switch (choice)
-		{
-		case 0: // Choose O.
-			players[randomNumber].mark = 'O';
-			players[!randomNumber].mark = 'X'; // Other player`s mark.
-			break;
-		case 1: // Choose X.
-			players[randomNumber].mark = 'X';
-			players[!randomNumber].mark = 'O'; // Other player`s mark.
-			break;
-		default:
-			std::cout << "Enter a valid command from the menu.\n";
-			break;
-		}
+    std::cout << "Player " << randomNumber + 1 << ", do you want to play first or second?\n"
+        << "0. First\n"
+        << "1. Second\n";
 
-	} while (choice != 0 && choice != 1);
+    // Ensure valid input for player turn choice
+    while (true) {
+        std::cin >> choice;
+        if (std::cin.fail()) {
+            clearInput();
+            std::cout << "Enter a valid option (0 or 1): ";
+            continue;
+        }
+        if (choice == 0 || choice == 1) break;
+    }
 
-	std::cout << "Player No." << randomNumber + 1 << " Do you want to start first or second?\n" <<
-		"Menu:\n" << "0. Play first.\n" << "1.Play second.\n";
-
-	std::cin >> choice;
-
-	do {
-		switch (choice)
-		{
-		case 0: // Plays first.
-			players[randomNumber].turn = "First";
-			players[!randomNumber].turn = "Second"; // Other player`s mark.
-			break;
-		case 1: // Plays second.
-			players[randomNumber].turn = "Second";
-			players[!randomNumber].turn = "First"; // Other player`s mark.
-			break;
-		default:
-			std::cout << "Enter a valid command from the menu.\n";
-			break;
-		}
-
-	} while (choice != 0 && choice != 1);
+    // Assign turn order based on player's choice
+    if (choice == 0) {
+        players[randomNumber].turn = "First";
+        players[!randomNumber].turn = "Second";
+    }
+    else {
+        players[randomNumber].turn = "Second";
+        players[!randomNumber].turn = "First";
+    }
 }
 
-bool isColAndRowInRange(int maxRow, int maxCol, int row, int column) 
-{
-	if (row < 0 || maxRow < row) // Row not in the right range.
-	{
-		return false;
-	}
-
-	if (column < 0 || maxCol < column) //  Column not in the right range.
-	{ 
-		return false;
-	}
-
-	return true; // In case the indices are in the range.
+/**
+ * @brief Checks if a given row and column are within valid range.
+ *
+ * @param maxRow Maximum number of rows in the game grid.
+ * @param maxCol Maximum number of columns in the game grid.
+ * @param row Row index entered by the player.
+ * @param column Column index entered by the player.
+ * @return true if the row and column are within the valid range; false otherwise.
+ */
+bool isRowAndColumnInRange(int maxRow, int maxCol, int row, int column) {
+    return (row >= 1 && row <= maxRow) && (column >= 1 && column <= maxCol);
 }
 
+/**
+ * @brief Checks if a cell in the grid is empty.
+ *
+ * @param grid The game grid.
+ * @param row Row index of the cell.
+ * @param column Column index of the cell.
+ * @return true if the cell is empty; false otherwise.
+ */
 bool isEmpty(const GameGrid& grid, int row, int column) {
-	{
-		if (grid[row][column] == 0) // Place is empty.
-		{
-			return true;
-		}
-		return false; // Place is not empty.
-	}
+    return grid[row - 1][column - 1] == ' '; // Adjust for 1-based input
 }
 
-void setMark(GameGrid& grid, Player& player, int row, int column) 
-{
-	if (isEmpty(grid, row, column))
-	{
-		grid[row][column] = player.mark;
-	}
-	else
-	{	
-		throw std::runtime_error("Cannot set mark in grid[" + std::to_string(row) + "][" + std::to_string(column) + "].\n");
-	}
+/**
+ * @brief Sets the player's mark in the specified grid cell.
+ *
+ * @param grid The game grid.
+ * @param player The player making the move.
+ * @param row Row index of the cell.
+ * @param column Column index of the cell.
+ */
+void setMark(GameGrid& grid, Player& player, int row, int column) {
+    grid[row - 1][column - 1] = player.mark; // Adjust for 1-based input
 }
 
-bool isDraw(const GameGrid& grid, int row, int column)
-{
-	for (int i = 0; i < grid.size(); i++) {
-		for (int j = 0; grid.size(); j++) {
-			if (grid[i][j] != 0) { // Meaning there`s a sqare in which there`s no element.
-				return false;
-			}
-		}
-	}
-
-	return true; // The whole grid is full and no player`s declared as the winner.
+/**
+ * @brief Checks if the game is a draw (i.e., the grid is full with no winner).
+ *
+ * @param grid The game grid.
+ * @return true if the game is a draw; false otherwise.
+ */
+bool isDraw(const GameGrid& grid) {
+    for (const auto& row : grid) {
+        for (const auto& cell : row) {
+            if (cell == ' ') return false;
+        }
+    }
+    return true;
 }
 
-bool doesWin(const GameGrid& grid, int row, int column, char playerMark)
-{
-	if (horizontalLineWin(grid, row, playerMark) ||
-		verticalLineWin(grid, column, playerMark) ||
-		diagonalUpperLeftToLowerRightWin(grid, row, column, playerMark) ||
-		diagonalLowerLeftToUpperRight(grid, row, column, playerMark))
-	{ // Player won
-		return true;
-	}
-
-	return false; // Player didn`t win.
+/**
+ * @brief Checks if a player has won the game by achieving a line of their mark.
+ *
+ * @param grid The game grid.
+ * @param row The row of the last move made.
+ * @param column The column of the last move made.
+ * @param playerMark The mark of the player ('O' or 'X').
+ * @return true if the player has won; false otherwise.
+ */
+bool doesWin(const GameGrid& grid, int row, int column, char playerMark) {
+    return horizontalLineWin(grid, row - 1, playerMark) || // Adjust for 0-based index
+        verticalLineWin(grid, column - 1, playerMark) ||
+        diagonalWin(grid, playerMark);
 }
 
-bool horizontalLineWin(const GameGrid& grid, int row, char playerMark)
-{
-	for (int j = 0; j < MAX_COLUMN; j++) {
-		if (grid[row][j] != playerMark) {
-			return false; // Found a mark on the grid`s horizontal line which is not the same as the player`s mark.
-		}
-	}
-
-	return true; // There`s a horizontal line made of the player`s mark.
+/**
+ * @brief Checks if there is a horizontal line of the given player's mark.
+ *
+ * @param grid The game grid.
+ * @param row The row to check.
+ * @param playerMark The mark of the player ('O' or 'X').
+ * @return true if there is a horizontal line; false otherwise.
+ */
+bool horizontalLineWin(const GameGrid& grid, int row, char playerMark) {
+    for (int col = 0; col < MAX_COLUMN; col++) {
+        if (grid[row][col] != playerMark) return false;
+    }
+    return true;
 }
 
-bool verticalLineWin(const GameGrid& grid, int col, char playerMark)
-{
-	for (int i = 0; i < MAX_ROW; i++) {
-		if (grid[i][col] != playerMark) {
-			return false; // Found a mark which is not the same as the player`s mark on the vertical line.
-		}
-	}
-
-	return true; // The whole vertical line is made of the same mark.
+/**
+ * @brief Checks if there is a vertical line of the given player's mark.
+ *
+ * @param grid The game grid.
+ * @param col The column to check.
+ * @param playerMark The mark of the player ('O' or 'X').
+ * @return true if there is a vertical line; false otherwise.
+ */
+bool verticalLineWin(const GameGrid& grid, int col, char playerMark) {
+    for (int row = 0; row < MAX_ROW; row++) {
+        if (grid[row][col] != playerMark) return false;
+    }
+    return true;
 }
 
-bool diagonalUpperLeftToLowerRightWin(const GameGrid& grid, int row, int col, char playerMark) 
-{
-	if (row != 1 && col != 1) { // In Tic Tac Toe there`s a diagonal line form the middle.
-		return false;
-	}
-	
-	for (int i = 0; i < MAX_ROW; i++) {
-		for (int j = 0; j < MAX_COLUMN; j++) {
-
-			if (grid[i][j] != playerMark) {
-				return false;
-			}
-		}
-	}
-
-	return true; // The whole diagonal line i smade of the same mark.
+/**
+ * @brief Checks if there is a diagonal line of the given player's mark.
+ *
+ * @param grid The game grid.
+ * @param playerMark The mark of the player ('O' or 'X').
+ * @return true if there is a diagonal line; false otherwise.
+ */
+bool diagonalWin(const GameGrid& grid, char playerMark) {
+    // Check top-left to bottom-right diagonal
+    if (grid[0][0] == playerMark && grid[1][1] == playerMark && grid[2][2] == playerMark) {
+        return true;
+    }
+    // Check bottom-left to top-right diagonal
+    if (grid[2][0] == playerMark && grid[1][1] == playerMark && grid[0][2] == playerMark) {
+        return true;
+    }
+    return false;
 }
 
-bool diagonalLowerLeftToUpperRight(const GameGrid& grid, int row, int col, char playerMark)
-{
-	if (row != 1 && col != 1) {
-		return false; // Diagonal line is only possible in TicTacToe from the middle of the grid.
-	}
-
-	for (int i = MAX_ROW - 1; i >= 0; i--) {
-		for (int j = 0; j < MAX_COLUMN; j++) {
-			if (grid[i][j] != playerMark) {
-				return false;
-			}
-		}
-	}
-
-	return true; // The whole diagonal line has the same player mark in it.
+/**
+ * @brief Displays the current state of the game grid.
+ *
+ * @param grid The game grid to display.
+ */
+void showGrid(const GameGrid& grid) {
+    std::cout << "---------\n";
+    for (int i = 0; i < MAX_ROW; i++) {
+        for (int j = 0; j < MAX_COLUMN; j++) {
+            std::cout << grid[i][j];
+            if (j < MAX_COLUMN - 1) std::cout << " | ";
+        }
+        std::cout << "\n";
+        if (i < MAX_ROW - 1) std::cout << "---------\n";
+    }
+    std::cout << "---------\n";
 }
 
+/**
+ * @brief Starts and manages the main gameplay loop.
+ *
+ * This function initializes the game grid and players, and handles alternating turns, checking for win conditions, and determining if the game ends in a draw.
+ */
 void play() {
-	// create grid
-	// create players
-	// flip coin
-	// grab input
-	//  -- INPUT CHECK -- using function
-	// check if empty
-	// setMark - in try catch, catch throw if caused --> if thrown go back to grabbing input
-	// check if doesWin
-	// check isDraw
-	// go back to grabbing input as the second player.
+    std::cout << "Game START\n";
 
-	
+    GameGrid grid(MAX_ROW, std::vector<char>(MAX_COLUMN, ' ')); // Create empty grid
+    Players players = { Player(), Player() };
+    flipCoin(players);
 
+    int turn = (players[0].turn == "First") ? 0 : 1;
+    int row;
+    int column;
+
+    // Main game loop
+    while (true) {
+        showGrid(grid);
+        std::cout << "Player " << (turn + 1) << " (" << players[turn].mark << "), enter your move (row and column):\n";
+        
+        std::cout << "Row: ";
+        std::cin >> row;
+        if (std::cin.fail()) {
+            std::cout << "Invalid input. Row and column must be between 1 and 3.\n";
+            clearInput();
+            continue;
+        }
+
+        std::cout << "Column: ";
+        std::cin >> column;
+        if (std::cin.fail()) {
+            std::cout << "Invalid input. Row and column must be between 1 and 3.\n";
+            clearInput();
+            continue;
+        }
+
+        if (!isRowAndColumnInRange(MAX_ROW, MAX_COLUMN, row, column)) {
+            std::cout << "Invalid input. Row and column must be between 1 and 3.\n";
+            continue;
+        }
+
+        if (!isEmpty(grid, row, column)) {
+            std::cout << "Cell is already occupied. Try again.\n";
+            continue;
+        }
+
+        setMark(grid, players[turn], row, column);
+
+        if (doesWin(grid, row, column, players[turn].mark)) {
+            showGrid(grid);
+            std::cout << "Player " << (turn + 1) << " wins!\n";
+            break;
+        }
+
+        if (isDraw(grid)) {
+            showGrid(grid);
+            std::cout << "It's a draw!\n";
+            break;
+        }
+
+        turn = !turn; // Toggle between 0 and 1
+    }
+
+    std::cout << "Game FINISH\n";
+    std::cout << "Thank you for playing!\n";
+}
+
+/**
+ * @brief Clears invalid input from the input stream.
+ */
+void clearInput() {
+    std::cin.clear();
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 }
