@@ -304,6 +304,7 @@ void play() {
     }
 
     std::cout << "Game FINISH\n";
+    std::cout << "Thank you for playing!\n";
 }
 
 /**
