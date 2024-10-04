@@ -149,14 +149,17 @@ int main() {
     library.showBooks();
 
     // Sort by Title
+    std::cout << "Library sorted by title:\n";
     library.sortBooksByTitle();
     library.showBooks();
 
     // Sort by author
+    std::cout << "Library sorted by author:\n";
     library.sortBooksByAuthor();
     library.showBooks();
 
     // Sort by ISBN
+    std::cout << "Library sorted by ISBN:\n";
     library.sortBooksByISBN();
     library.showBooks();
 
